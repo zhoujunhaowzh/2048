@@ -1,0 +1,65 @@
+云帮数据中心通过api接口访问，基于简单的rbac提供统一的对外api的授权管理，可接受应用控制台和资源控制台的同时访问，通过websocket给前端提供消息服务
+
+应用构建：支持基于源码构建，基于Docker镜像，Dockerfile构建，基于云市应用  应用构建起从消息系统接受构建任务 > 分析构建方式，调用相关插件进行构建 > 输出云帮本地应用。  本地应用戒指存储氛围景象存储和源码环境包存储
+
+应用管理器：提供应用的启停，升级，回滚，维护应用的运行状态 
+
+消息与日志服务：记录应用标准输出的所有日志并实时传输控制台终端，日志分区动态生成，可多点部署
+
+节点管理器：完成对集群，节点的抽象，例如，对节点自动化安装将Kubernetes的急诶单抽象作为云帮计算机节点抽象的一部分，存储模块节点抽象为云帮存储节点一部分
+
+性能分析与监控服务： 对各资源数据提供查询api，监控数据提供报警，逐步抽象出运行状态，实现按需实时伸缩
+
+
+
+python应用注意点：
+
+1.在项目的根目录下生成requirementstxt文件，云帮通过检测该文件识别为python应用，并安装项目所依赖对应版本的包
+2.在根目录下添加一个runtime.txt文件制定解释器版本，默认是python2.7.13，但注意有几个不支持的版本python3.4.5/python3.4.6/python3.6.0/python3.6.1
+3.系统使用setuptools 35.0.2和pip9.0.1 并执行pip install -r requirements.txt --allow-all-external来解决环境依赖
+4.在根目录下创建Procfile文件，并应用gunicorn来定制启动项目命令 例如：web: gunicorn 文件名:funcname --log-file - --access-logfile - --error-logfile - ，web是定义应用的服务类型
+5.如果是django项目需要做静态文件处理，在setting中添加STATIC_ROOT，STATICFILES_DIRS
+默认情况下构建Django应用时会自动执行python manage.py collectstatic --dry-run --noinput来检查配置是否正确，如果没有问题再执行python manage.py collectstatic --noinput命令将所有的静态文件拷贝到static_root目录。 如需禁止上述特性，在应用的环境变量配置DISABLE_COLLECTSTATIC=1
+6.使用Whitenoise项目托管静态文件： 
+1. pip install whitenoise
+2. settings配置STATICFILES_STORAGE = 'whitenoise.django.gunicornzipManifestStaticFilesStorage'
+3. wsgi.py配置 WhiteNoise
+	from django.core.wsgi import get_wsgi_application
+	from whitenoise.django import DjangoWhiteNoise
+	application = get_wsgi_application()
+	application = DjangoWhiteNoise(application)
+
+
+控制台功能：
+管理容器：可以登录服务器的命令行页面进行管理
+重新部署：初始化设置重新部署
+启停日志：现实info，debug，error日志的监控
+日志：应用运行时产生的日志
+伸缩：是后端实例与负载均衡断开后从平台资源池中重新划分内存资源，划分完成后重新接入负载均衡。
+依赖：通过健支值对的方式，将环境变量写入实力的系统环境中，其他应用可以访问
+持久化：通过数据卷挂载目录的方式，将分布式存储以数据卷的形式挂载到您应用下的特定目录，该目录下存储的所有数据都会保存在分布式存储中
+端口：对内和对外的访问端口，对内的端口露给平台内部的其他应用，对配置应用间以来关系很重要
+
+
+
+遇到问题：
+Kubernetes节点抽象是什么？
+gunicorn 如何构建一个启动命令
+我应用中要链接数据库，部署时是怎么知道我应用的配置信息并关联上数据库的
+docker的Docker-Compose等知识
+修改bug时要在那里改，要停止应用后在github上修改完重新部署吗？
+python2 mysqldb-python模块安装EnvironmentError: mysql_config not found问题
+
+
+
+平台优点：
+这节省了用户很多时间，可以让用户专心写代码，不用为服务器、网络以及代码运行环境的配置操心。
+可以帮助我们快速学习、试验我们的代码，将我们从复杂的配置和运维工作中解脱了出来。
+一键化部属上线，重启关闭，不需运维也可以做项目上线
+实时监控状态，日志同步，根据实际情况实实伸缩，节省资源操作简单
+
+
+可以优化的地方：
+文档中说明详细请看文档，应当给一个调转链接比较好
+文档中有a标签跳转，重新打开一个窗口跳转
+容器管理页面信息有时显示不全
